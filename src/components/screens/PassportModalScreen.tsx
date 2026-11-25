@@ -20,8 +20,6 @@ import { GAME_COPY } from '../../data/i18n';
 import {
   AUSTRALIA_MISSION_ID,
   AUSTRALIA_PASSPORT_STAMP_ID,
-  isAustraliaMissionCompleted,
-  isAustraliaPerformAwaitingReflection,
   JAIPUR_MISSION_ID,
   KENYA_MISSION_ID,
   KENYA_PASSPORT_STAMP_ID,
@@ -184,14 +182,9 @@ export function PassportModalScreen({
                         ? AUSTRALIA_PASSPORT_STAMP_ID
                         : 'stamp_egypt_expedition';
               const earned =
-                country.id === 'australia'
-                  ? isAustraliaMissionCompleted(progress) &&
-                    progress.rewards.stamps.includes(AUSTRALIA_PASSPORT_STAMP_ID)
-                  : progress.rewards.stamps.includes(stampId) ||
-                    (country.id === 'kenya' &&
-                      progress.rewards.stamps.includes('stamp_kenya_safari'));
-              const australiaReflectionPending =
-                country.id === 'australia' && !earned && isAustraliaPerformAwaitingReflection(progress);
+                progress.rewards.stamps.includes(stampId) ||
+                (country.id === 'kenya' &&
+                  progress.rewards.stamps.includes('stamp_kenya_safari'));
               return (
                 <div
                   key={country.id}
@@ -263,9 +256,7 @@ export function PassportModalScreen({
                       {country.countryName[language]}
                     </p>
                     <p className="mt-0.5 text-[11px] text-[var(--vv-ink-muted)]">
-                      {australiaReflectionPending
-                        ? copy.australiaPerformReflectionGateNotice
-                        : country.stampTitle[language]}
+                      {country.stampTitle[language]}
                     </p>
                   </div>
                 </div>

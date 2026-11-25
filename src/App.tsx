@@ -16,7 +16,6 @@ import type {
   ScreenRoute,
 } from './types/game';
 import {
-  canNavigateToCountry,
   canReplayCountry,
   collectJaipurVocabObject,
   completeAustraliaBuildMission,
@@ -185,7 +184,6 @@ export default function App() {
   const [passportIntroMode, setPassportIntroMode] = useState(false);
   const [passportReturnRoute, setPassportReturnRoute] = useState<'world-map' | 'country-lobby'>('world-map');
   const [avatarEntrySource, setAvatarEntrySource] = useState<'title' | 'world-map' | 'passport'>('title');
-  const [australiaOpenReflectionOnEnter, setAustraliaOpenReflectionOnEnter] = useState(false);
   const [webglSupported, setWebglSupported] = useState<boolean>(() => detectWebGLSupport());
   const [viewMode, setViewMode] = useState<'3d' | '2d'>(() =>
     detectWebGLSupport() ? '3d' : '2d',
@@ -266,35 +264,15 @@ export default function App() {
     saveProgress(progress);
   }, [progress]);
 
-  useEffect(() => {
-    if (
-      progress.currentRoute === 'country-lobby' &&
-      !canNavigateToCountry(progress, progress.selectedCountryId)
-    ) {
-      setProgress((prev) =>
-        prev.currentRoute === 'country-lobby' &&
-        !canNavigateToCountry(prev, prev.selectedCountryId)
-          ? { ...prev, currentRoute: 'world-map' }
-          : prev,
-      );
-    }
-  }, [progress]);
-
   const selectedCountry = getCountryById(progress.selectedCountryId);
   const hasCompletedAvatar = progress.avatar.customizedInPhase1;
 
   const navigate = (nextRoute: ScreenRoute) => {
     voxAudio.playSfx('click', progress.audioPrefs.sfxEnabled, resolvedAppearance);
-    setProgress((prev) => {
-      const resolvedRoute =
-        nextRoute === 'country-lobby' && !canNavigateToCountry(prev, prev.selectedCountryId)
-          ? 'world-map'
-          : nextRoute;
-      return {
-        ...prev,
-        currentRoute: resolvedRoute,
-      };
-    });
+    setProgress((prev) => ({
+      ...prev,
+      currentRoute: nextRoute,
+    }));
   };
 
   const handlePlay = () => {
@@ -905,10 +883,7 @@ export default function App() {
         effectiveReducedMotion ? 'reduced-motion' : ''
       }`}
     >
-      {progress.currentRoute === 'welcome' ||
-      progress.currentRoute === 'world-map' ||
-      (progress.currentRoute === 'country-lobby' &&
-        !canNavigateToCountry(progress, progress.selectedCountryId)) ? (
+      {progress.currentRoute === 'welcome' || progress.currentRoute === 'world-map' ? (
         <main className="relative h-[100dvh] w-full overflow-hidden">
           {/* Full-Screen Living 3D World (or Accessible 2D Fallback) */}
           <div className="absolute inset-0">
@@ -978,10 +953,6 @@ export default function App() {
               musicPlaying={musicPlaying}
               onSelectCountry={handleSelectCountry}
               onEnterWorld={() => {
-                if (!canNavigateToCountry(progress, progress.selectedCountryId)) {
-                  voxAudio.playSfx('click', progress.audioPrefs.sfxEnabled, resolvedAppearance);
-                  return;
-                }
                 if (progress.selectedCountryId === 'scotland' && !scotlandUnlocked) {
                   voxAudio.playSfx('click', progress.audioPrefs.sfxEnabled, resolvedAppearance);
                   return;
@@ -992,7 +963,6 @@ export default function App() {
                     return;
                   }
                   voxAudio.playSfx('click', progress.audioPrefs.sfxEnabled, resolvedAppearance);
-                  setAustraliaOpenReflectionOnEnter(false);
                   setProgress((prev) => ({
                     ...markAustraliaEntered(prev),
                     currentRoute: 'country-lobby',
@@ -1012,19 +982,6 @@ export default function App() {
                   return;
                 }
                 navigate('country-lobby');
-              }}
-              onEnterAustraliaReflection={() => {
-                if (!canNavigateToCountry(progress, 'australia')) {
-                  voxAudio.playSfx('click', progress.audioPrefs.sfxEnabled, resolvedAppearance);
-                  return;
-                }
-                voxAudio.playSfx('select', progress.audioPrefs.sfxEnabled, resolvedAppearance);
-                setAustraliaOpenReflectionOnEnter(true);
-                setProgress((prev) => ({
-                  ...markAustraliaEntered(prev),
-                  selectedCountryId: 'australia',
-                  currentRoute: 'country-lobby',
-                }));
               }}
               onRequestReplayCountry={handleRequestReplayCountry}
               onRequestRestartAttempt={handleRequestRestartAttempt}
@@ -1100,7 +1057,11 @@ export default function App() {
           }
           onBackOverride={
             passportReturnRoute === 'country-lobby' &&
-            canNavigateToCountry(progress, progress.selectedCountryId)
+            (progress.selectedCountryId === 'india' ||
+              progress.selectedCountryId === 'kenya' ||
+              (progress.selectedCountryId === 'scotland' && scotlandUnlocked) ||
+              (progress.selectedCountryId === 'australia' && australiaUnlocked) ||
+              (progress.selectedCountryId === 'egypt' && egyptUnlocked))
               ? () => navigate('country-lobby')
               : undefined
           }
@@ -1366,8 +1327,6 @@ export default function App() {
           isReplayActive={Boolean(australiaReplayAttempt)}
           replayAttemptNumber={australiaReplayAttempt?.attemptNumber}
           canReplayCountry={australiaCanReplay}
-          openReflectionOnEnter={australiaOpenReflectionOnEnter}
-          onConsumeOpenReflectionOnEnter={() => setAustraliaOpenReflectionOnEnter(false)}
           onRequestRestartAttempt={() => handleRequestRestartAttempt('australia')}
           onRequestReplayCountry={() => handleRequestReplayCountry('australia')}
           onMarkNpcMet={handleMarkAustraliaNpcMet}

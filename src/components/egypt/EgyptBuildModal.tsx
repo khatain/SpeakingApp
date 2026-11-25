@@ -869,11 +869,7 @@ export function EgyptBuildModal({
       }`}
     >
       <div
-        className={`flex max-h-[94dvh] w-full ${
-          missionMeta.gameId === 'pyramid_route_architect'
-            ? 'max-w-5xl'
-            : 'max-w-4xl'
-        } flex-col overflow-hidden rounded-3xl border shadow-2xl ${modalShellClass}`}
+        className={`flex max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border shadow-2xl ${modalShellClass}`}
       >
         {/* Header */}
         <div

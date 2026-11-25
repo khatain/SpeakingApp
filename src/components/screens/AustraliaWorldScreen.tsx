@@ -81,7 +81,6 @@ import { AustraliaPracticeModal } from '../australia/AustraliaPracticeModal';
 import {
   AustraliaPerformModal,
   type AustraliaPerformModalView,
-  type AustraliaPerformReflectionDraft,
 } from '../australia/AustraliaPerformModal';
 import { useWorldNavigation } from '../../utils/useWorldNavigation';
 import { SmartNavigationHud } from '../navigation/SmartNavigationHud';
@@ -131,8 +130,6 @@ interface AustraliaWorldScreenProps {
   isReplayActive?: boolean;
   replayAttemptNumber?: number;
   canReplayCountry?: boolean;
-  openReflectionOnEnter?: boolean;
-  onConsumeOpenReflectionOnEnter?: () => void;
   onMarkNpcMet: (npcId: AustraliaNpcId) => void;
   onMarkPoiExplored: (landmarkId: AustraliaLandmarkId) => void;
   onStartDiscovery: () => void;
@@ -214,8 +211,6 @@ export function AustraliaWorldScreen({
   isReplayActive = false,
   replayAttemptNumber,
   canReplayCountry = false,
-  openReflectionOnEnter = false,
-  onConsumeOpenReflectionOnEnter,
   onMarkNpcMet,
   onMarkPoiExplored,
   onStartDiscovery,
@@ -251,10 +246,6 @@ export function AustraliaWorldScreen({
     useState<AustraliaLandmarkId | null>(null);
   const [activePerformView, setActivePerformView] =
     useState<AustraliaPerformModalView | null>(null);
-  const [reflectionDraft, setReflectionDraft] = useState<
-    AustraliaPerformReflectionDraft | undefined
-  >(undefined);
-  const [hasExitedReflectionWithoutSubmit, setHasExitedReflectionWithoutSubmit] = useState(false);
   const [performCompleteToast, setPerformCompleteToast] = useState<{
     xpEarned: boolean;
   } | null>(null);
@@ -448,45 +439,13 @@ export function AustraliaWorldScreen({
     ],
   );
 
-  const awaitingFinalReflection =
-    performUnlocked &&
-    performStarted &&
-    completedPerformIds.length >= AUSTRALIA_PERFORM_CHALLENGES.length &&
-    !performCompleted;
-
-  const performDisplayCount = performCompleted
-    ? AUSTRALIA_PERFORM_CHALLENGES.length
-    : Math.min(completedPerformIds.length, AUSTRALIA_PERFORM_CHALLENGES.length - 1);
-
-  useEffect(() => {
-    if (performCompleted) {
-      setReflectionDraft(undefined);
-      setHasExitedReflectionWithoutSubmit(false);
-    }
-  }, [performCompleted]);
-
   const openPerformReflection = useCallback(() => {
-    if (
-      !performUnlocked ||
-      !performStarted ||
-      completedPerformIds.length < AUSTRALIA_PERFORM_CHALLENGES.length
-    ) {
-      return;
-    }
+    if (!performUnlocked || !performStarted) return;
     stopSpeech();
     onPlaySfx('reward');
     setActiveModalPoiId(null);
     setActivePerformView({ kind: 'reflection' });
-  }, [completedPerformIds.length, onPlaySfx, performStarted, performUnlocked, stopSpeech]);
-
-  useEffect(() => {
-    if (openReflectionOnEnter) {
-      if (awaitingFinalReflection) {
-        setActivePerformView({ kind: 'reflection' });
-      }
-      onConsumeOpenReflectionOnEnter?.();
-    }
-  }, [awaitingFinalReflection, onConsumeOpenReflectionOnEnter, openReflectionOnEnter]);
+  }, [onPlaySfx, performStarted, performUnlocked, stopSpeech]);
 
   const openPerformCelebration = useCallback(() => {
     if (!performCompleted && !performAlreadyRewarded) return;
@@ -815,8 +774,8 @@ export function AustraliaWorldScreen({
                   : performUnlocked
                     ? !performStarted
                       ? copy.australiaPerformObjectiveStart
-                      : awaitingFinalReflection
-                        ? copy.australiaPerformReflectionGateNotice
+                      : completedPerformIds.length >= AUSTRALIA_PERFORM_CHALLENGES.length
+                        ? copy.australiaPerformObjectiveReflection
                         : copy.australiaPerformObjectiveInProgress
                     : practiceUnlocked
                       ? practiceStarted
@@ -850,7 +809,7 @@ export function AustraliaWorldScreen({
             <span>{copy.australiaCityGuideButton}</span>
             <span className="font-mono-num rounded bg-black/10 px-1.5 py-0.5 text-[10px]">
               {performUnlocked
-                ? `${performDisplayCount}/${AUSTRALIA_PERFORM_CHALLENGES.length}`
+                ? `${completedPerformIds.length}/${AUSTRALIA_PERFORM_CHALLENGES.length}`
                 : practiceUnlocked
                   ? `${completedPracticeIds.length}/${AUSTRALIA_PRACTICE_MISSIONS.length}`
                   : discoverCompleted
@@ -858,21 +817,6 @@ export function AustraliaWorldScreen({
                     : `${completedDiscoverIds.length}/${AUSTRALIA_DISCOVER_MISSIONS.length}`}
             </span>
           </button>
-
-          {awaitingFinalReflection && (
-            <button
-              type="button"
-              onClick={openPerformReflection}
-              className="inline-flex min-h-[42px] items-center gap-1.5 rounded-xl bg-[#F2C66D] px-3.5 py-1.5 text-xs font-extrabold text-[#131E31] shadow-md hover:bg-[#f6d388] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <Award className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>
-                {hasExitedReflectionWithoutSubmit
-                  ? copy.australiaPerformResumeReflectionButton
-                  : copy.australiaPerformCompleteReflectionButton}
-              </span>
-            </button>
-          )}
 
           {isReplayActive && replayAttemptNumber !== undefined && (
             <div
@@ -1251,7 +1195,7 @@ export function AustraliaWorldScreen({
                           : performCompleted && activeNpcEntry.id === 'npc_olivia'
                             ? copy.australiaPerformObjectiveCompleted
                             : readyForFinalReflection && activeNpcEntry.id === 'npc_olivia'
-                              ? copy.australiaPerformReflectionGateNotice
+                              ? copy.australiaPerformObjectiveReflection
                               : performDone
                                 ? copy.australiaPerformCompletedBadge
                                 : performEligible
@@ -1294,11 +1238,7 @@ export function AustraliaWorldScreen({
                           className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl bg-[#F2C66D] px-4 py-2 text-xs font-extrabold text-[#131E31] hover:bg-[#f6d388] cursor-pointer whitespace-nowrap"
                         >
                           <Award className="h-3.5 w-3.5" aria-hidden="true" />
-                          <span>
-                            {hasExitedReflectionWithoutSubmit
-                              ? copy.australiaPerformResumeReflectionButton
-                              : copy.australiaPerformCompleteReflectionButton}
-                          </span>
+                          <span>{copy.australiaPerformStartReflectionButton}</span>
                         </button>
                       ) : performEligible || performDone ? (
                         <button
@@ -2234,17 +2174,12 @@ export function AustraliaWorldScreen({
           builtDialogues={builtDialogues}
           performEvidence={performEvidence}
           existingReflection={performReflection}
-          reflectionDraft={reflectionDraft}
           canReplayCountry={canReplayCountry}
           difficultyMode={difficultyMode}
           onDifficultyChange={setDifficultyMode}
-          onReflectionDraftChange={setReflectionDraft}
-          onReflectionExitedWithoutSubmit={() => setHasExitedReflectionWithoutSubmit(true)}
           onCompleteChallenge={onCompletePerformChallenge}
           onCompletePerformMission={(reflection) => {
             const res = onCompletePerformMission(reflection);
-            setReflectionDraft(undefined);
-            setHasExitedReflectionWithoutSubmit(false);
             setPerformCompleteToast({
               xpEarned: res.firstCompletion,
             });
@@ -2298,7 +2233,6 @@ export function AustraliaWorldScreen({
         nextPerformLandmarkId={nextPerformLandmarkId}
         performCompleted={performCompleted}
         performEvidence={performEvidence}
-        hasExitedReflectionWithoutSubmit={hasExitedReflectionWithoutSubmit}
         guidedLandmarkId={guidedPoiId}
         initialLandmarkId={guideInitialLandmarkId}
         onGuideToLandmark={(id) => setGuidedPoiId(id)}

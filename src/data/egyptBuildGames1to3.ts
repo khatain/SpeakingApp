@@ -818,8 +818,6 @@ function stepDelta(d: RouteDirectionKind): { dx: number; dy: number } {
 }
 
 function parseWordSteps(text: string): number {
-  if (/\bsix\b|6/.test(text)) return 6;
-  if (/\bfive\b|5/.test(text)) return 5;
   if (/\bfour\b|4/.test(text)) return 4;
   if (/\bthree\b|3/.test(text)) return 3;
   if (/\btwo\b|2/.test(text)) return 2;
@@ -838,8 +836,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     a2: {
       mode: 'a2',
       missionGoal: {
-        en: 'From Base Camp (facing North), guide the explorer straight three blocks north and stop beside the Viewing Platform.',
-        th: 'จากค่ายฐาน (หันทิศเหนือ) สั่งนักสำรวจเดินตรงไปทางทิศเหนือ 3 ช่อง แล้วหยุดข้างจุดชมวิว',
+        en: 'From Base Camp (facing North), guide the explorer straight three blocks north and stop beside the Viewing Platform or Great Pyramid plaza.',
+        th: 'จากค่ายฐาน (หันทิศเหนือ) ให้สั่งนักสำรวจเดินตรงไปข้างหน้า 3 ช่องแล้วหยุดหน้าจุดชมวิว (0, 0)',
       },
       startPos: { x: 0, y: 3, facing: 'N' },
       targetPos: { x: 0, y: 0 },
@@ -858,7 +856,7 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
         { value: 'Oasis', role: 'object', isDistractor: true },
       ]),
       acceptedPatterns: [
-        /^walk\s+straight\s+(?:north\s+three\s+blocks|three\s+blocks\s+north)\s+and\s+stop\s+beside\s+the\s+viewing\s+platform$/i,
+        /^walk\s+straight\s+north\s+three\s+blocks\s+and\s+stop\s+beside\s+the\s+viewing\s+platform$/i,
       ],
       canonicalModel: 'Walk straight north three blocks and stop beside the Viewing Platform.',
       thaiScaffold: 'เดินตรงไปทางทิศเหนือสามช่วงตึกแล้วหยุดข้างจุดชมวิว',
@@ -868,8 +866,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
           th: 'โครงสร้าง: [Walk straight + ทิศ + ระยะ] + and + [stop beside the + สถานที่]',
         },
         tier2Focus: {
-          en: 'Pair "north" with "three blocks", and end with "stop beside the Viewing Platform".',
-          th: 'จับคู่ "north" กับ "three blocks" แล้วปิดท้ายด้วย "stop beside the Viewing Platform"',
+          en: 'Put distance after "north", and end with "stop beside the Viewing Platform".',
+          th: 'วาง "three blocks" ต่อจาก "north" แล้วปิดด้วย "stop beside the Viewing Platform"',
         },
         tier3Scaffold: {
           en: 'Model frame: "Walk straight north ___ and stop beside the ___."',
@@ -880,8 +878,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     b1: {
       mode: 'b1',
       missionGoal: {
-        en: 'From Base Camp (facing North), direct visitors north along the west lane past the Viewing Platform, then stop at the north corner.',
-        th: 'จากค่ายฐาน (หันทิศเหนือ) นำนักท่องเที่ยวเดินขึ้นทิศเหนือ 3 ช่องผ่านจุดชมวิว แล้วหยุดที่หัวมุมเหนือ',
+        en: 'From Base Camp (facing North), direct visitors north along the west lane past the Viewing Platform, then stop at the north corner (0, 0).',
+        th: 'จากค่ายฐาน (หันทิศเหนือ) ให้นำนักท่องเที่ยวเดินขึ้นทิศเหนือ 3 ก้าวผ่านจุดชมวิว แล้วหยุดที่หัวมุมเหนือ (0, 0)',
       },
       startPos: { x: 0, y: 3, facing: 'N' },
       targetPos: { x: 0, y: 0 },
@@ -901,7 +899,7 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
         { value: 'two blocks', role: 'phrase', isDistractor: true },
       ]),
       acceptedPatterns: [
-        /^head\s+straight\s+(?:north\s+three\s+blocks|three\s+blocks\s+north)\s+past\s+the\s+viewing\s+platform(?:,)?\s+then\s+stop\s+at\s+the\s+north\s+corner$/i,
+        /^head\s+straight\s+north\s+three\s+blocks\s+past\s+the\s+viewing\s+platform(?:,)?\s+then\s+stop\s+at\s+the\s+north\s+corner$/i,
       ],
       canonicalModel:
         'Head straight north three blocks past the Viewing Platform, then stop at the north corner.',
@@ -932,8 +930,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     a2: {
       mode: 'a2',
       missionGoal: {
-        en: 'Starting at Base Camp (facing North), go north one block, turn right, and walk two blocks east to the Sphinx Statue.',
-        th: 'เริ่มจากค่ายฐาน (หันเหนือ) เดินขึ้นเหนือ 1 ช่อง เลี้ยวขวา แล้วเดิน 2 ช่องสู่รูปปั้นสฟิงซ์',
+        en: 'Starting at Base Camp (facing North), go north one block, turn right, and walk two blocks to the Sphinx Statue (2, 2).',
+        th: 'เริ่มจากค่ายฐาน (หันเหนือ) เดินขึ้นเหนือ 1 ช่อง เลี้ยวขวา แล้วเดิน 2 ช่องสู่รูปปั้นสฟิงซ์ (2, 2)',
       },
       startPos: { x: 0, y: 3, facing: 'N' },
       targetPos: { x: 2, y: 2 },
@@ -979,8 +977,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     b1: {
       mode: 'b1',
       missionGoal: {
-        en: 'From Base Camp (facing North), direct a visitor one block north, turn right onto the sandstone lane, and continue two blocks to reach the Sphinx Statue.',
-        th: 'จากค่ายฐาน (หันเหนือ) พานักท่องเที่ยวเดินเหนือ 1 ช่อง เลี้ยวขวาเข้าทางหินทราย และเดินต่อ 2 ช่องถึงรูปปั้นสฟิงซ์',
+        en: 'From Base Camp (facing North), direct a visitor one block north, turn right onto the sandstone lane, and continue two blocks to reach the Sphinx Statue (2, 2).',
+        th: 'จากค่ายฐาน (หันเหนือ) พานักท่องเที่ยวเดินเหนือ 1 ช่อง เลี้ยวขวาเข้าทางหินทราย และเดินต่อ 2 ช่องถึงรูปปั้นสฟิงซ์ (2, 2)',
       },
       startPos: { x: 0, y: 3, facing: 'N' },
       targetPos: { x: 2, y: 2 },
@@ -1032,8 +1030,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     a2: {
       mode: 'a2',
       missionGoal: {
-        en: 'Starting along the south trail just east of Base Camp (facing East), walk straight four blocks past the Shade Oasis, turn left, and go two blocks north to the Information Point.',
-        th: 'เริ่มบนเส้นทางด้านใต้ถัดจากค่ายฐานมาทางตะวันออก (หันตะวันออก) เดินตรง 4 ช่องผ่านโอเอซิสพักร่ม แล้วเลี้ยวซ้ายเดิน 2 ช่องสู่จุดบริการข้อมูล',
+        en: 'Starting at (1, 3) facing East, walk straight four blocks east past the Shade Oasis (4, 3), turn left, and go two blocks to reach the Information Point (5, 1).',
+        th: 'เริ่มที่จุด (1, 3) หันทิศตะวันออก เดินตรง 4 ช่องผ่านโอเอซิสพักร่ม (4, 3) แล้วเลี้ยวซ้ายเดิน 2 ช่องสู่จุดบริการข้อมูล (5, 1)',
       },
       startPos: { x: 1, y: 3, facing: 'E' },
       targetPos: { x: 5, y: 1 },
@@ -1078,8 +1076,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     b1: {
       mode: 'b1',
       missionGoal: {
-        en: 'Guide researchers from the south trail east of Base Camp (facing East): continue four blocks east past the Shade Oasis, then turn left and walk two blocks to reach the Information Point.',
-        th: 'นำนักวิจัยจากเส้นทางด้านใต้ถัดจากค่ายฐาน (หันตะวันออก) เดินตะวันออก 4 ช่องผ่านโอเอซิสพักร่ม จากนั้นเลี้ยวซ้ายเดินขึ้นไป 2 ช่องสู่จุดบริการข้อมูล',
+        en: 'Guide researchers from (1, 3) facing East: continue four blocks past the Shade Oasis, then turn left and go two blocks to stop beside the Information Point (5, 1).',
+        th: 'นำนักวิจัยจาก (1, 3) หันตะวันออก เดิน 4 ช่องผ่านโอเอซิสพักร่ม จากนั้นเลี้ยวซ้ายขึ้นไป 2 ช่องแล้วหยุดข้างจุดบริการข้อมูล (5, 1)',
       },
       startPos: { x: 1, y: 3, facing: 'E' },
       targetPos: { x: 5, y: 1 },
@@ -1113,8 +1111,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
           th: 'ใช้ "Continue east + four blocks + past the Shade Oasis," แล้วต่อด้วย "then turn left and walk two blocks..."',
         },
         tier2Focus: {
-          en: 'Walk all the way past the Shade Oasis to the far-east edge, then turn left (north) for 2 blocks to reach the Information Point.',
-          th: 'เดินเลยโอเอซิสพักร่มไปจนสุดขอบตะวันออก แล้วเลี้ยวซ้ายขึ้นเหนืออีก 2 ช่องจะถึงจุดบริการข้อมูลพอดี',
+          en: 'Remember 4 blocks brings you to (5, 3), and 2 blocks left (north) reaches (5, 1).',
+          th: 'เดิน 4 ช่องจะถึง (5, 3) แล้วเลี้ยวซ้ายขึ้นไป 2 ช่องจะถึง (5, 1) พอดี',
         },
         tier3Scaffold: {
           en: 'Model frame: "Continue east four blocks past ___, then turn left and walk two blocks to ___."',
@@ -1133,8 +1131,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     a2: {
       mode: 'a2',
       missionGoal: {
-        en: 'From Base Camp (facing North), avoid the blocked sand dune east of the Viewing Platform! Walk north three blocks to the north-west corner, turn right, and walk two blocks to the Great Pyramid.',
-        th: 'จากค่ายฐาน (หันเหนือ) ให้เลี่ยงเนินทรายที่ปิดกั้นข้างจุดชมวิว! เดินขึ้นเหนือ 3 ช่องถึงหัวมุมบนซ้าย เลี้ยวขวา แล้วเดิน 2 ช่องสู่มหาพีระมิด',
+        en: 'From Base Camp (0, 3) facing North, avoid the blocked sand mound at (1, 1)! Walk north three blocks to (0, 0), turn right, and walk two blocks to the Great Pyramid (2, 0).',
+        th: 'จากค่ายฐาน (0, 3) หันเหนือ ให้เลี่ยงเนินทรายที่ปิดกั้นตรง (1, 1)! เดินขึ้นเหนือ 3 ช่องถึง (0, 0) เลี้ยวขวา และเดิน 2 ช่องสู่มหาพีระมิด (2, 0)',
       },
       startPos: { x: 0, y: 3, facing: 'N' },
       targetPos: { x: 2, y: 0 },
@@ -1159,8 +1157,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
       canonicalModel: 'Walk north three blocks, turn right, and go two blocks to the Great Pyramid.',
       thaiScaffold: 'เดินขึ้นทิศเหนือสามช่อง เลี้ยวขวา แล้วเดินอีกสองช่องสู่มหาพีระมิด',
       wrongOrderHint: {
-        en: 'Careful! Walking two blocks north first and turning right sends you straight into the blocked sand dune beside the Viewing Platform! Walk THREE blocks north first.',
-        th: 'ระวัง! ถ้าเดินขึ้นเหนือแค่ 2 ช่องแล้วเลี้ยวขวา จะชนแนวเนินทรายที่ปิดกั้นทันที ให้เดินขึ้นเหนือ 3 ช่องก่อนนะ',
+        en: 'Careful! Walking two blocks north first and turning right sends you straight into the blocked sand mound at (1, 1)! Walk THREE blocks north first.',
+        th: 'ระวัง! ถ้าเดินขึ้นเหนือแค่ 2 ช่องแล้วเลี้ยวขวา จะชนเขตเนินทรายที่ (1, 1) ทันที ให้เดินขึ้นเหนือ 3 ช่องก่อนนะ',
       },
       hints: {
         tier1Structure: {
@@ -1168,8 +1166,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
           th: 'เดินให้พ้นแนวที่ถูกปิดกั้นก่อน: เดินเหนือ 3 ช่อง -> เลี้ยวขวา -> เดิน 2 ช่อง',
         },
         tier2Focus: {
-          en: 'Choose "three blocks," first, NOT "two blocks,"—turning right at the Viewing Platform runs into the blocked sand dune!',
-          th: 'เลือก "three blocks," ก่อน ไม่ใช่ "two blocks," เพราะแถวจุดชมวิวมีเนินทรายปิดกั้นอยู่',
+          en: 'Choose "three blocks," first, NOT "two blocks,"—because row y=1 is blocked at (1, 1)!',
+          th: 'เลือก "three blocks," ก่อน ไม่ใช่ "two blocks," เพราะแถว y=1 มีสิ่งกีดขวาง',
         },
         tier3Scaffold: {
           en: 'Model frame: "Walk north three blocks, turn right, and go two blocks to ___."',
@@ -1180,8 +1178,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     b1: {
       mode: 'b1',
       missionGoal: {
-        en: 'Guide a group from Base Camp (facing North) safely around the blocked sand dune: walk three blocks past the Viewing Platform, turn right, and continue two blocks to the Great Pyramid.',
-        th: 'นำกลุ่มผู้สำรวจจากค่ายฐาน (หันเหนือ) อ้อมแนวเนินทรายหวงห้ามอย่างปลอดภัย: เดินขึ้นเหนือ 3 ช่องผ่านจุดชมวิว เลี้ยวขวา และเดินต่อ 2 ช่องสู่มหาพีระมิด',
+        en: 'Guide a group from (0, 3) facing North safely around the fragile cordon at (1, 1): walk three blocks past the Viewing Platform, turn right, and continue two blocks to the Great Pyramid (2, 0).',
+        th: 'นำกลุ่มผู้สำรวจจาก (0, 3) อ้อมแนวเขตอนุรักษ์ (1, 1) อย่างปลอดภัย: เดินขึ้นเหนือ 3 ช่องผ่านจุดชมวิว เลี้ยวขวา และเดินต่อ 2 ช่องสู่มหาพีระมิด (2, 0)',
       },
       startPos: { x: 0, y: 3, facing: 'N' },
       targetPos: { x: 2, y: 0 },
@@ -1215,8 +1213,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
           th: 'ผสาน ระยะเดิน + เหตุผล ("to avoid the sand mound,") + เลี้ยว + ระยะสุดท้าย',
         },
         tier2Focus: {
-          en: 'Three blocks north reaches the top ridge cleanly above the blocked dune.',
-          th: 'เดินขึ้นเหนือ 3 ช่องจะถึงแนวสันด้านบน พ้นจุดกีดขวางพอดี',
+          en: 'Three blocks up reaches y=0 cleanly above the blocked cell.',
+          th: 'เดินขึ้นเหนือ 3 ช่องจะถึงแถวบนสุด y=0 พ้นจุดกีดขวางพอดี',
         },
         tier3Scaffold: {
           en: 'Model frame: "Go straight three blocks past ___ to avoid the sand mound, turn right, and walk two blocks to ___."',
@@ -1235,8 +1233,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     a2: {
       mode: 'a2',
       missionGoal: {
-        en: 'From Base Camp (facing East), walk east four blocks to the Shade Oasis, turn left, and walk three blocks north to the Expedition Flag. Avoid turning too early near the cordoned excavation!',
-        th: 'จากค่ายฐาน (หันทิศตะวันออก) เดินไปทางตะวันออก 4 ช่องถึงโอเอซิสพักร่ม เลี้ยวซ้าย แล้วเดินขึ้นเหนือ 3 ช่องสู่ธงคณะสำรวจ (หลีกเลี่ยงแนวขุดค้นที่ปิดกั้น)',
+        en: 'From Base Camp (0, 3) facing East: go east four blocks past the Oasis to (4, 3), turn left, and walk three blocks north to the Expedition Flag (4, 0)! Notice (3, 2) is blocked if you turn too early!',
+        th: 'จากค่ายฐาน (0, 3) หันทิศตะวันออก: เดินไปทางตะวันออก 4 ช่องผ่านโอเอซิส (4, 3) เลี้ยวซ้าย แล้วเดิน 3 ช่องสู่ธงคณะสำรวจ (4, 0) (ระวังจุด (3, 2) ปิดกั้นหากเลี้ยวเร็วไป)',
       },
       startPos: { x: 0, y: 3, facing: 'E' },
       targetPos: { x: 4, y: 0 },
@@ -1281,8 +1279,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     b1: {
       mode: 'b1',
       missionGoal: {
-        en: 'From the Sphinx Statue (facing North), walk north two blocks to the Great Pyramid, turn right, and continue two blocks east to stop beside the Expedition Flag.',
-        th: 'จากรูปปั้นสฟิงซ์ (หันเหนือ) เดินตรงขึ้นเหนือ 2 ช่องถึงมหาพีระมิด เลี้ยวขวา และเดินต่อ 2 ช่องเพื่อหยุดข้างธงคณะสำรวจ',
+        en: 'From Sphinx Statue (2, 2) facing North: go north two blocks to the Great Pyramid (2, 0), turn right, and continue two blocks to stop beside the Expedition Flag (4, 0).',
+        th: 'จากรูปปั้นสฟิงซ์ (2, 2) หันเหนือ: เดินตรงขึ้นเหนือ 2 ช่องถึงมหาพีระมิด (2, 0) เลี้ยวขวา และเดินต่อ 2 ช่องเพื่อหยุดข้างธงคณะสำรวจ (4, 0)',
       },
       startPos: { x: 2, y: 2, facing: 'N' },
       targetPos: { x: 4, y: 0 },
@@ -1331,14 +1329,14 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     challengeId: 'pr_6_full_visitor_tour',
     order: 6,
     title: {
-      en: 'Full Guided Tour · Across the Giza Plateau',
-      th: 'นำทางเต็มรูปแบบ · ข้ามลานมหาพีระมิดกีซา',
+      en: 'Full Guided Route · From Oasis to Viewing Platform',
+      th: 'นำทางเต็มรูปแบบ · จากโอเอซิสสู่จุดชมวิว',
     },
     a2: {
       mode: 'a2',
       missionGoal: {
-        en: 'Guide a visitor from the Information Point (facing North): walk one block north to the top corner, turn left, and go straight three blocks west past the Expedition Flag to the Great Pyramid.',
-        th: 'นำทางจากจุดบริการข้อมูล (หันเหนือ): เดินขึ้นเหนือ 1 ช่องถึงมุมบนขวา เลี้ยวซ้าย แล้วเดินตรง 3 ช่องผ่านธงคณะสำรวจสู่มหาพีระมิด',
+        en: 'Guide a visitor from Information Point (5, 1) facing North: go one block north to (5, 0), turn left, walk three blocks west past the Expedition Flag and Great Pyramid to (2, 0)!',
+        th: 'นำทางจากจุดบริการข้อมูล (5, 1) หันเหนือ: เดิน 1 ช่องไปที่ (5, 0) เลี้ยวซ้าย แล้วเดิน 3 ช่องผ่านธงคณะสำรวจสู่มหาพีระมิด (2, 0)',
       },
       startPos: { x: 5, y: 1, facing: 'N' },
       targetPos: { x: 2, y: 0 },
@@ -1367,12 +1365,12 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
       thaiScaffold: 'เดินหนึ่งช่อง เลี้ยวซ้าย แล้วเดินตรงสามช่องผ่านธงคณะสำรวจสู่มหาพีระมิด',
       hints: {
         tier1Structure: {
-          en: 'Walk 1 block north to the top row, turn left (West), then go 3 blocks past the Flag to the Pyramid.',
+          en: 'Walk 1 block to the top row, turn left (West), then go 3 blocks past the Flag to the Pyramid.',
           th: 'เดินขึ้นแถวบน 1 ช่อง เลี้ยวซ้าย (ตะวันตก) แล้วเดิน 3 ช่องผ่านธงสู่มหาพีระมิด',
         },
         tier2Focus: {
-          en: 'Moving across the top ridge from the corner to the Great Pyramid takes "three blocks", passing the Expedition Flag along the way.',
-          th: 'จากหัวมุมบนขวาเดินไปทางตะวันตกจนถึงมหาพีระมิดใช้ระยะ "three blocks" โดยผ่านธงคณะสำรวจระหว่างทาง',
+          en: 'Going from x=5 to x=2 takes "three blocks", passing x=4 (Expedition Flag) on the way.',
+          th: 'จาก x=5 ไป x=2 ใช้ระยะ "three blocks" โดยผ่านจุด x=4 (Expedition Flag)',
         },
         tier3Scaffold: {
           en: 'Model frame: "Walk one block, turn left, and go straight three blocks past ___ to ___."',
@@ -1383,8 +1381,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
     b1: {
       mode: 'b1',
       missionGoal: {
-        en: 'From the Expedition Flag (facing West), walk four blocks west past the Great Pyramid to the north corner, then turn left and go one block south to stop beside the Viewing Platform.',
-        th: 'นำเที่ยวจากธงคณะสำรวจ (หันตะวันตก): เดินไปทางตะวันตก 4 ช่องผ่านมหาพีระมิดจนถึงหัวมุมเหนือ จากนั้นเลี้ยวซ้ายเดินลงใต้ 1 ช่องไปหยุดข้างจุดชมวิว',
+        en: 'From the Expedition Flag (4, 0) facing West, walk four blocks west past the Great Pyramid to the north corner (0, 0), then turn left and go one block to stop beside the Viewing Platform (0, 1).',
+        th: 'นำเที่ยวจากธงคณะสำรวจ (4, 0) หันตะวันตก: เดินสองช่องผ่านมหาพีระมิด ต่ออีกสองช่องถึงมุมเหนือ จากนั้นเลี้ยวซ้ายเดินหนึ่งช่องหยุดข้างจุดชมวิว (0, 1)',
       },
       startPos: { x: 4, y: 0, facing: 'W' },
       targetPos: { x: 0, y: 1 },
@@ -1421,8 +1419,8 @@ export const PYRAMID_ROUTE_ARCHITECT_CHALLENGES: RouteArchitectChallengeBundle[]
           th: 'ช่วง 1 (เดินตะวันตก 4 ช่องผ่านมหาพีระมิดถึงมุม) -> เลี้ยวซ้าย (ใต้) -> เดิน 1 ช่องหยุดข้างจุดชมวิว',
         },
         tier2Focus: {
-          en: 'Across the entire top ridge to the west corner is "four blocks", and turning left from West faces South to the Viewing Platform.',
-          th: 'เดินตามแนวบนสุดจนถึงหัวมุมตะวันตกใช้ "four blocks" และเมื่อหันตะวันตกแล้วเลี้ยวซ้ายจะได้ทิศใต้พอดี',
+          en: 'From x=4 to x=0 is "four blocks", and turning left from West faces South to (0, 1).',
+          th: 'จาก x=4 ไป x=0 ใช้ "four blocks" และเมื่อหันตะวันตกแล้วเลี้ยวซ้ายจะได้ทิศใต้พอดี',
         },
         tier3Scaffold: {
           en: 'Model frame: "First, walk four blocks past ___ to the north corner, then turn left and go one block to stop beside ___."',
@@ -1567,12 +1565,6 @@ export function simulateArchitectRoute(
   }
 
   if (!reachedEnd) {
-    const landedLandmark = ARCHITECT_BOARD_LANDMARKS.find(
-      (lm) => lm.x === cx && lm.y === cy,
-    );
-    const goalLandmark = ARCHITECT_BOARD_LANDMARKS.find(
-      (lm) => lm.id === variant.targetLandmarkId,
-    );
     return {
       validGrammar,
       validRoute: false,
@@ -1585,12 +1577,8 @@ export function simulateArchitectRoute(
       failureReasonKey: 'wrong_destination',
       feedback:
         variant.wrongOrderHint ?? {
-          en: landedLandmark
-            ? `The explorer stopped at the ${landedLandmark.label.en} instead of reaching the mission goal${goalLandmark ? ` (${goalLandmark.label.en})` : ''}. Adjust your turns or block count!`
-            : `The explorer stopped before reaching the mission destination. Check your compass direction, turns, and block count!`,
-          th: landedLandmark
-            ? `นักสำรวจหยุดอยู่ที่ ${landedLandmark.label.th} ซึ่งยังไม่ตรงจุดหมายภารกิจ ลองปรับการเลี้ยวหรือจำนวนช่องเดินใหม่อีกครั้ง`
-            : `นักสำรวจยังเดินไม่ถึงจุดหมายของภารกิจ ลองตรวจทิศทางเข็มทิศ การเลี้ยว และจำนวนช่องเดินอีกครั้ง`,
+          en: `The route ended at (${cx}, ${cy}) instead of the goal (${variant.targetPos.x}, ${variant.targetPos.y}). Adjust your steps or turns!`,
+          th: `เส้นทางไปหยุดที่ช่อง (${cx}, ${cy}) ซึ่งยังไม่ถึงเป้าหมาย (${variant.targetPos.x}, ${variant.targetPos.y}) ลองปรับจำนวนช่องหรือทิศทางดูนะ`,
         },
     };
   }

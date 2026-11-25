@@ -882,10 +882,6 @@ export const GAME_COPY: Record<
     australiaPerformGoldenToastBody: string;
     australiaPerformReviewPromptLabel: string;
     australiaPerformNoAutoAnswerNote: string;
-    australiaPerformReflectionGateNotice: string;
-    australiaPerformCompleteReflectionButton: string;
-    australiaPerformResumeReflectionButton: string;
-    worldMapAustraliaReflectionPendingHint: string;
     navGoToNextMission: string;
     navPlacesButton: string;
     navAutoWalkButton: string;
@@ -1908,12 +1904,6 @@ export const GAME_COPY: Record<
     australiaPerformGoldenToastBody: '+100 XP awarded · 1,000 World Explorer XP milestone · Egypt Expedition Unlocked (Coming Soon)!',
     australiaPerformReviewPromptLabel: 'Self-Evaluation Check',
     australiaPerformNoAutoAnswerNote: 'Independent PERFORM mode: full model answers stay hidden unless you request a hint tip.',
-    australiaPerformReflectionGateNotice:
-      'One final step! Complete your Self-Reflection to finish Australia and unlock your next destination.',
-    australiaPerformCompleteReflectionButton: 'Complete Self-Reflection',
-    australiaPerformResumeReflectionButton: 'Resume Self-Reflection',
-    worldMapAustraliaReflectionPendingHint:
-      'One final step! Complete your Self-Reflection to finish Australia and unlock your next destination.',
     navGoToNextMission: 'Go to Next Mission',
     navPlacesButton: 'Places',
     navAutoWalkButton: 'Auto-Walk',
@@ -2932,12 +2922,6 @@ export const GAME_COPY: Record<
     australiaPerformGoldenToastBody: 'รับ +100 XP · คะแนนรวมครบ 1,000 XP · ปลดล็อกบทอียิปต์ (Coming Soon) แล้ว!',
     australiaPerformReviewPromptLabel: 'การประเมินตนเอง',
     australiaPerformNoAutoAnswerNote: 'โหมดอิสระ PERFORM: ระบบจะไม่แสดงเฉลยเต็มโดยอัตโนมัติ จนกว่าคุณจะกดขอคำใบ้',
-    australiaPerformReflectionGateNotice:
-      'เหลืออีกหนึ่งขั้นตอน! ทำแบบประเมินตนเองให้เสร็จเพื่อจบภารกิจประเทศออสเตรเลียและปลดล็อกประเทศถัดไป',
-    australiaPerformCompleteReflectionButton: 'ทำแบบประเมินตนเองให้เสร็จ',
-    australiaPerformResumeReflectionButton: 'ทำแบบประเมินตนเองต่อ',
-    worldMapAustraliaReflectionPendingHint:
-      'เหลืออีกหนึ่งขั้นตอน! ทำแบบประเมินตนเองให้เสร็จเพื่อจบภารกิจประเทศออสเตรเลียและปลดล็อกประเทศถัดไป',
     navGoToNextMission: 'ไปภารกิจถัดไป',
     navPlacesButton: 'จุดหมาย',
     navAutoWalkButton: 'เดินอัตโนมัติ',
