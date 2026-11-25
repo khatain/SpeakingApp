@@ -29,11 +29,13 @@ import { AUSTRALIA_MISSION_ID } from '../../data/australiaWorld';
 import { EGYPT_DISCOVERY_ACTIVITY_ID } from '../../data/egyptDiscover';
 import { EGYPT_BUILD_ACTIVITY_ID } from '../../data/egyptBuild';
 import {
+  canNavigateToCountry,
   canReplayCountry,
   getCountryReplayAttempt,
   getEgyptEffectiveEntry,
   hasActiveCountryReplay,
   isAustraliaMissionCompleted,
+  isAustraliaPerformAwaitingReflection,
   isAustraliaUnlocked,
   isEgyptUnlocked,
   isJaipurMissionCompleted,
@@ -55,6 +57,7 @@ interface WorldMapOverlayProps {
   musicPlaying: boolean;
   onSelectCountry: (id: CountryId) => void;
   onEnterWorld: () => void;
+  onEnterAustraliaReflection?: () => void;
   onRequestReplayCountry: (id: CountryId) => void;
   onRequestRestartAttempt: (id: CountryId) => void;
   onOpenPassport: () => void;
@@ -81,6 +84,7 @@ export function WorldMapOverlay({
   musicPlaying,
   onSelectCountry,
   onEnterWorld,
+  onEnterAustraliaReflection,
   onRequestReplayCountry,
   onRequestRestartAttempt,
   onOpenPassport,
@@ -96,6 +100,7 @@ export function WorldMapOverlay({
   const scotlandEntry = progress.missionProgress[SCOTLAND_MISSION_ID];
   const australiaUnlocked = isAustraliaUnlocked(progress);
   const australiaEntry = progress.missionProgress[AUSTRALIA_MISSION_ID];
+  const australiaAwaitingReflection = isAustraliaPerformAwaitingReflection(progress);
   const egyptUnlocked = isEgyptUnlocked(progress);
   const egyptEntry = getEgyptEffectiveEntry(progress);
 
@@ -163,9 +168,10 @@ export function WorldMapOverlay({
 
   const selectedStatus = getCountryStatus(selectedCountry.id);
   const canEnterSelected =
-    selectedStatus === 'completed' ||
-    selectedStatus === 'in_progress' ||
-    selectedStatus === 'available';
+    canNavigateToCountry(progress, selectedCountry.id) &&
+    (selectedStatus === 'completed' ||
+      selectedStatus === 'in_progress' ||
+      selectedStatus === 'available');
   const canReplaySelected = canReplayCountry(progress, selectedCountry.id);
   const hasActiveReplaySelected = hasActiveCountryReplay(progress, selectedCountry.id);
   const activeReplaySelected = getCountryReplayAttempt(progress, selectedCountry.id);
@@ -395,6 +401,18 @@ export function WorldMapOverlay({
                       : copy.worldMapScotlandUnlockHint}
                 </p>
               )}
+              {selectedCountry.id === 'australia' &&
+                australiaUnlocked &&
+                australiaAwaitingReflection &&
+                selectedStatus === 'in_progress' && (
+                  <p
+                    className={`text-[11px] font-bold mt-0.5 ${
+                      isNight ? 'text-[#F2C66D]' : 'text-[#9A5B13]'
+                    }`}
+                  >
+                    {copy.worldMapAustraliaReflectionPendingHint}
+                  </p>
+                )}
               {selectedCountry.id === 'egypt' &&
                 egyptUnlocked &&
                 (selectedStatus === 'available' || selectedStatus === 'in_progress') && (
@@ -458,14 +476,25 @@ export function WorldMapOverlay({
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={onEnterWorld}
-                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#F2C66D] px-5 py-2.5 font-display text-sm font-bold text-[#131E31] shadow-md hover:bg-[#f6d388] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
-              >
-                <span>{copy.enterWorldButton}</span>
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </button>
+              {selectedCountry.id === 'australia' && australiaAwaitingReflection ? (
+                <button
+                  type="button"
+                  onClick={onEnterAustraliaReflection ?? onEnterWorld}
+                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#F2C66D] px-5 py-2.5 font-display text-sm font-bold text-[#131E31] shadow-md hover:bg-[#f6d388] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <span>{copy.australiaPerformResumeReflectionButton}</span>
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onEnterWorld}
+                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#F2C66D] px-5 py-2.5 font-display text-sm font-bold text-[#131E31] shadow-md hover:bg-[#f6d388] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <span>{copy.enterWorldButton}</span>
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
             </div>
           ) : (
             <button

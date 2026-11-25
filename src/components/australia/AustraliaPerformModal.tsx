@@ -45,6 +45,7 @@ import {
 } from '../../data/australiaBuild';
 import {
   AUSTRALIA_PERFORM_CHALLENGES,
+  AUSTRALIA_PERFORM_CHALLENGE_ORDER,
   AUSTRALIA_PERFORM_REFLECTION_ITEMS,
   AUSTRALIA_PERFORM_XP_REWARD,
   TOTAL_AUSTRALIA_MISSION_XP,
@@ -71,6 +72,13 @@ export type AustraliaPerformModalView =
   | { kind: 'reflection' }
   | { kind: 'celebration' };
 
+type ReflectionDraftKey = keyof Omit<AustraliaPerformReflectionState, 'completedAt'>;
+
+export interface AustraliaPerformReflectionDraft {
+  selectedChoices: Record<ReflectionDraftKey, string>;
+  customNotes: Record<ReflectionDraftKey, string>;
+}
+
 interface AustraliaPerformModalProps {
   initialView: AustraliaPerformModalView;
   language: AppLanguage;
@@ -86,9 +94,12 @@ interface AustraliaPerformModalProps {
   builtDialogues: Record<string, string>;
   performEvidence: Record<string, AustraliaPerformChallengeRecord>;
   existingReflection?: AustraliaPerformReflectionState;
+  reflectionDraft?: AustraliaPerformReflectionDraft;
   canReplayCountry: boolean;
   difficultyMode: AustraliaDifficultyMode;
   onDifficultyChange: (mode: AustraliaDifficultyMode) => void;
+  onReflectionDraftChange?: (draft: AustraliaPerformReflectionDraft) => void;
+  onReflectionExitedWithoutSubmit?: () => void;
   onCompleteChallenge: (
     landmarkId: AustraliaLandmarkId,
     record: AustraliaPerformChallengeRecord,
@@ -104,8 +115,6 @@ interface AustraliaPerformModalProps {
 }
 
 type ChallengeStep = 'briefing' | 'interact' | 'respond' | 'review' | 'complete';
-
-type ReflectionDraftKey = keyof Omit<AustraliaPerformReflectionState, 'completedAt'>;
 
 const SPARKLE_SPOTS: readonly { left: string; top: string; delay: string }[] = [
   { left: '8%', top: '16%', delay: '0s' },
@@ -128,7 +137,7 @@ export function AustraliaPerformModal({
   language,
   appearance,
   reducedMotion,
-  alreadyCompletedChallenge,
+  alreadyCompletedChallenge: _alreadyCompletedChallenge,
   completedPerformCount,
   allFiveChallengesDone,
   attemptPerformCompleted,
@@ -138,9 +147,12 @@ export function AustraliaPerformModal({
   builtDialogues,
   performEvidence,
   existingReflection,
+  reflectionDraft,
   canReplayCountry,
   difficultyMode,
   onDifficultyChange,
+  onReflectionDraftChange,
+  onReflectionExitedWithoutSubmit,
   onCompleteChallenge,
   onCompletePerformMission,
   onClose,
@@ -152,7 +164,17 @@ export function AustraliaPerformModal({
   const copy = GAME_COPY[language];
   const isNight = appearance === 'night';
 
-  const [viewMode, setViewMode] = useState<AustraliaPerformModalView['kind']>(initialView.kind);
+  const [viewMode, setViewMode] = useState<AustraliaPerformModalView['kind']>(() => {
+    if (
+      initialView.kind === 'celebration' &&
+      !attemptPerformCompleted &&
+      !performAlreadyRewarded &&
+      !existingReflection
+    ) {
+      return allFiveChallengesDone ? 'reflection' : 'challenge';
+    }
+    return initialView.kind;
+  });
   const activeLandmarkId: AustraliaLandmarkId =
     initialView.kind === 'challenge' ? initialView.landmarkId : 'circular_quay_plaza';
   const challenge =
@@ -195,27 +217,32 @@ export function AustraliaPerformModal({
   const [recordingWarning, setRecordingWarning] = useState(false);
   const [submittedChallengeRecord, setSubmittedChallengeRecord] =
     useState<AustraliaPerformChallengeRecord | null>(null);
-  const [wasAlreadyDoneAtOpen] = useState(alreadyCompletedChallenge);
 
   // Final Guided Reflection state (5 required items; A2 preset selection + optional B1 note)
   const [selectedReflectionChoices, setSelectedReflectionChoices] = useState<
     Record<ReflectionDraftKey, string>
-  >({
-    easiestPart: '',
-    mostChallengingPart: '',
-    keptConversationGoing: '',
-    usefulExpression: '',
-    nextImprovement: '',
-  });
+  >(
+    () =>
+      reflectionDraft?.selectedChoices ?? {
+        easiestPart: '',
+        mostChallengingPart: '',
+        keptConversationGoing: '',
+        usefulExpression: '',
+        nextImprovement: '',
+      },
+  );
   const [customReflectionNotes, setCustomReflectionNotes] = useState<
     Record<ReflectionDraftKey, string>
-  >({
-    easiestPart: existingReflection?.easiestPart ?? '',
-    mostChallengingPart: existingReflection?.mostChallengingPart ?? '',
-    keptConversationGoing: existingReflection?.keptConversationGoing ?? '',
-    usefulExpression: existingReflection?.usefulExpression ?? '',
-    nextImprovement: existingReflection?.nextImprovement ?? '',
-  });
+  >(
+    () =>
+      reflectionDraft?.customNotes ?? {
+        easiestPart: existingReflection?.easiestPart ?? '',
+        mostChallengingPart: existingReflection?.mostChallengingPart ?? '',
+        keptConversationGoing: existingReflection?.keptConversationGoing ?? '',
+        usefulExpression: existingReflection?.usefulExpression ?? '',
+        nextImprovement: existingReflection?.nextImprovement ?? '',
+      },
+  );
 
   // Track celebration banner / firstCompletion state
   const [celebrationFirstReward, setCelebrationFirstReward] = useState<boolean>(false);
@@ -275,7 +302,16 @@ export function AustraliaPerformModal({
   useEffect(() => {
     releaseAllRecordings();
     stopSpeech();
-    setViewMode(initialView.kind);
+    if (
+      initialView.kind === 'celebration' &&
+      !attemptPerformCompleted &&
+      !performAlreadyRewarded &&
+      !existingReflection
+    ) {
+      setViewMode(allFiveChallengesDone ? 'reflection' : 'challenge');
+    } else {
+      setViewMode(initialView.kind);
+    }
     setStep('briefing');
     setCurrentTurnIndex(0);
     setCompletedTurnModes({});
@@ -292,6 +328,13 @@ export function AustraliaPerformModal({
     // Intentionally sync only when initialView identity changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialView.kind, initialView.kind === 'challenge' ? initialView.landmarkId : 'none']);
+
+  useEffect(() => {
+    onReflectionDraftChange?.({
+      selectedChoices: selectedReflectionChoices,
+      customNotes: customReflectionNotes,
+    });
+  }, [customReflectionNotes, onReflectionDraftChange, selectedReflectionChoices]);
 
   useEffect(() => {
     return () => {
@@ -333,9 +376,21 @@ export function AustraliaPerformModal({
   const handleClose = useCallback(() => {
     releaseAllRecordings();
     stopSpeech();
+    if (viewMode === 'reflection' && !attemptPerformCompleted && !savedReflection) {
+      onReflectionExitedWithoutSubmit?.();
+    }
     onPlaySfx('click');
     onClose();
-  }, [onClose, onPlaySfx, releaseAllRecordings, stopSpeech]);
+  }, [
+    attemptPerformCompleted,
+    onClose,
+    onPlaySfx,
+    onReflectionExitedWithoutSubmit,
+    releaseAllRecordings,
+    savedReflection,
+    stopSpeech,
+    viewMode,
+  ]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -518,6 +573,17 @@ export function AustraliaPerformModal({
         recordingState !== 'requesting'
       : Boolean(noMicConfirmedTurnIds[activeTurn.turnId]);
 
+  const allChallengesReadyForReflection =
+    allFiveChallengesDone || completedPerformCount >= totalChallenges;
+
+  const celebrationUnlocked = Boolean(
+    attemptPerformCompleted || performAlreadyRewarded || savedReflection,
+  );
+
+  const displayPerformCount = celebrationUnlocked
+    ? totalChallenges
+    : Math.min(completedPerformCount, totalChallenges - 1);
+
   const handleSaveChallenge = () => {
     if (!allTurnsDone) return;
     stopSpeech();
@@ -534,11 +600,20 @@ export function AustraliaPerformModal({
       completedAt: new Date().toISOString(),
     };
 
+    const completesAllRequiredChallenges = AUSTRALIA_PERFORM_CHALLENGE_ORDER.every(
+      (id) => id === challenge.id || Boolean(performEvidence[id]),
+    );
+
     releaseAllRecordings();
     onPlaySfx('reward');
     onCompleteChallenge(challenge.id, record);
     setSubmittedChallengeRecord(record);
-    setStep('complete');
+    if (completesAllRequiredChallenges && !attemptPerformCompleted) {
+      // Seamlessly transition straight into mandatory Self-Reflection without closing modal
+      setViewMode('reflection');
+    } else {
+      setStep('complete');
+    }
   };
 
   const handleReplayCurrentChallenge = () => {
@@ -566,7 +641,7 @@ export function AustraliaPerformModal({
   );
 
   const handleSubmitReflection = () => {
-    if (!isReflectionComplete) return;
+    if (!isReflectionComplete || !allChallengesReadyForReflection) return;
     stopSpeech();
     stopPlayback();
     const reflectionState: AustraliaPerformReflectionState = {
@@ -685,15 +760,6 @@ export function AustraliaPerformModal({
     usedScriptPreviewCount: usedScriptCount,
   });
 
-  // Check if Challenge 5 just completed and reflection can be launched next
-  const allChallengesReadyForReflection =
-    allFiveChallengesDone ||
-    (submittedChallengeRecord !== null &&
-      (wasAlreadyDoneAtOpen
-        ? completedPerformCount >= totalChallenges
-        : completedPerformCount >= totalChallenges ||
-          completedPerformCount + 1 >= totalChallenges));
-
   const stepTabs: { id: ChallengeStep; label: string }[] = [
     { id: 'briefing', label: copy.australiaPerformStepBriefing },
     { id: 'interact', label: copy.australiaPerformStepInteract },
@@ -794,13 +860,18 @@ export function AustraliaPerformModal({
                     <>
                       {npcEntry.name} · {landmark.title[language]} ·{' '}
                       <span className="font-mono-num font-bold text-[#0EA5E9] dark:text-[#38BDF8]">
-                        {completedPerformCount}/{totalChallenges}
+                        {displayPerformCount}/{totalChallenges}
                       </span>
                     </>
                   ) : viewMode === 'reflection' ? (
-                    copy.australiaPerformReflectionSubtitle
+                    <>
+                      {copy.australiaPerformReflectionSubtitle} ·{' '}
+                      <span className="font-mono-num font-bold text-[#D97706] dark:text-[#FBBF24]">
+                        {displayPerformCount}/{totalChallenges}
+                      </span>
+                    </>
                   ) : (
-                    countrySubtitleLine(language, attemptPerformCompleted)
+                    countrySubtitleLine(language, celebrationUnlocked)
                   )}
                 </p>
               </div>
@@ -1715,6 +1786,19 @@ export function AustraliaPerformModal({
           {/* FINAL GUIDED REFLECTION VIEW */}
           {viewMode === 'reflection' && (
             <div className="space-y-4">
+              {!celebrationUnlocked && (
+                <div
+                  className={`rounded-2xl border p-4 text-xs sm:text-sm font-bold flex items-start gap-2.5 ${
+                    isNight
+                      ? 'border-[#F2C66D]/45 bg-[#2A2215] text-[#FDE68A]'
+                      : 'border-[#F59E0B]/45 bg-[#FFFBEB] text-[#92400E]'
+                  }`}
+                >
+                  <Award className="h-4 w-4 shrink-0 mt-0.5 text-[#F59E0B]" aria-hidden="true" />
+                  <span>{copy.australiaPerformReflectionGateNotice}</span>
+                </div>
+              )}
+
               <div
                 className={`rounded-2xl border p-4 text-xs sm:text-sm font-semibold flex items-start gap-2.5 ${
                   isNight
@@ -1834,8 +1918,8 @@ export function AustraliaPerformModal({
             </div>
           )}
 
-          {/* CELEBRATION CEREMONY VIEW */}
-          {viewMode === 'celebration' && (
+          {/* CELEBRATION CEREMONY VIEW (strictly gated behind canonical completion/submitted reflection) */}
+          {viewMode === 'celebration' && celebrationUnlocked && (
             <div className="space-y-4">
               {/* Sydney Harbour Celebration Banner + Optional Subtle Sparkles */}
               <div className="relative overflow-hidden rounded-3xl border border-[#F2C66D]/50 shadow-xl">

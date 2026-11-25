@@ -70,6 +70,7 @@ interface SydneyCityExplorerGuideModalProps {
   nextPerformLandmarkId: AustraliaLandmarkId | null;
   performCompleted: boolean;
   performEvidence: Record<string, AustraliaPerformChallengeRecord>;
+  hasExitedReflectionWithoutSubmit?: boolean;
   guidedLandmarkId: AustraliaLandmarkId | null;
   initialLandmarkId?: AustraliaLandmarkId;
   onGuideToLandmark: (id: AustraliaLandmarkId) => void;
@@ -116,6 +117,7 @@ export function SydneyCityExplorerGuideModal({
   nextPerformLandmarkId,
   performCompleted,
   performEvidence,
+  hasExitedReflectionWithoutSubmit = false,
   guidedLandmarkId,
   initialLandmarkId,
   onGuideToLandmark,
@@ -401,7 +403,14 @@ export function SydneyCityExplorerGuideModal({
                     )}
                     {performUnlocked && (
                       <span className="font-mono-num text-xs font-extrabold text-[#D97706] dark:text-[#FBBF24]">
-                        PERFORM: {completedPerformIds.length}/{AUSTRALIA_PERFORM_CHALLENGES.length}
+                        PERFORM:{' '}
+                        {performCompleted
+                          ? AUSTRALIA_PERFORM_CHALLENGES.length
+                          : Math.min(
+                              completedPerformIds.length,
+                              AUSTRALIA_PERFORM_CHALLENGES.length - 1,
+                            )}
+                        /{AUSTRALIA_PERFORM_CHALLENGES.length}
                       </span>
                     )}
                   </div>
@@ -463,8 +472,8 @@ export function SydneyCityExplorerGuideModal({
                   </div>
                 ) : performUnlocked && performStarted && completedPerformIds.length >= AUSTRALIA_PERFORM_CHALLENGES.length ? (
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-black/10 pt-3 dark:border-white/10">
-                    <p className="text-xs font-bold text-[#059669] dark:text-[#34D399]">
-                      {copy.australiaPerformObjectiveReflection}
+                    <p className="text-xs font-bold text-[#D97706] dark:text-[#FBBF24]">
+                      {copy.australiaPerformReflectionGateNotice}
                     </p>
                     <button
                       type="button"
@@ -476,7 +485,11 @@ export function SydneyCityExplorerGuideModal({
                       className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl bg-[#F2C66D] px-3.5 py-1.5 text-xs font-extrabold text-[#131E31] hover:bg-[#f6d388] cursor-pointer whitespace-nowrap"
                     >
                       <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span>{copy.australiaPerformStartReflectionButton}</span>
+                      <span>
+                        {hasExitedReflectionWithoutSubmit
+                          ? copy.australiaPerformResumeReflectionButton
+                          : copy.australiaPerformCompleteReflectionButton}
+                      </span>
                     </button>
                   </div>
                 ) : performUnlocked && performStarted ? (

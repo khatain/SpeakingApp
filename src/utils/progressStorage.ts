@@ -810,17 +810,18 @@ export function migrateAndValidateProgress(raw: unknown): LocalProgressV1 {
               if (Object.keys(nextPerformEvidence).length > 0) {
                 australiaPerformEvidence = nextPerformEvidence;
               }
-              if (performSeq.length >= AUSTRALIA_PERFORM_CHALLENGE_ORDER.length) {
-                australiaPerformReflection = sanitizeAustraliaPerformReflectionState(
-                  entry.australiaPerformReflection,
-                );
-              }
+              australiaPerformReflection = sanitizeAustraliaPerformReflectionState(
+                entry.australiaPerformReflection,
+              );
             }
           }
 
           const allPerformChallengesDone =
             (australiaCompletedPerformIds?.length ?? 0) >=
-            AUSTRALIA_PERFORM_CHALLENGE_ORDER.length;
+              AUSTRALIA_PERFORM_CHALLENGE_ORDER.length &&
+            AUSTRALIA_PERFORM_CHALLENGE_ORDER.every((id) =>
+              Boolean(australiaPerformEvidence?.[id]),
+            );
           const rawHasPerformCompletion =
             sanitizedCompletedIds.includes(AUSTRALIA_PERFORM_ACTIVITY_ID) ||
             entry.australiaPerformCompleted === true ||
@@ -1405,7 +1406,12 @@ export function migrateAndValidateProgress(raw: unknown): LocalProgressV1 {
     australiaPerformLegitCompleted &&
     sanitizedStamps.includes(AUSTRALIA_PASSPORT_STAMP_ID);
 
-  if (!egyptLegitUnlocked && sanitizedMissionProgress[EGYPT_MISSION_ID]) {
+  // Preserve legitimate Egypt progress if a learner reached Stage 4 PERFORM in Australia under an
+  // earlier premature-Egypt bug; otherwise scrub unauthorized/spoofed Egypt entries.
+  const hasAustraliaPerformHistory =
+    australiaLegitUnlocked &&
+    Boolean(sanitizedMissionProgress[AUSTRALIA_MISSION_ID]?.australiaPerformStarted);
+  if (!egyptLegitUnlocked && !hasAustraliaPerformHistory && sanitizedMissionProgress[EGYPT_MISSION_ID]) {
     sanitizedMissionProgress[EGYPT_MISSION_ID] = {
       status: 'not_started',
       currentStage: 'discover',
@@ -2179,17 +2185,18 @@ export function migrateAndValidateProgress(raw: unknown): LocalProgressV1 {
               if (Object.keys(nextPerformEvidence).length > 0) {
                 australiaPerformEvidence = nextPerformEvidence;
               }
-              if (performSeq.length >= AUSTRALIA_PERFORM_CHALLENGE_ORDER.length) {
-                australiaPerformReflection = sanitizeAustraliaPerformReflectionState(
-                  rawAttempt.australiaPerformReflection,
-                );
-              }
+              australiaPerformReflection = sanitizeAustraliaPerformReflectionState(
+                rawAttempt.australiaPerformReflection,
+              );
             }
           }
 
           const allPerformChallengesDone =
             (australiaCompletedPerformIds?.length ?? 0) >=
-            AUSTRALIA_PERFORM_CHALLENGE_ORDER.length;
+              AUSTRALIA_PERFORM_CHALLENGE_ORDER.length &&
+            AUSTRALIA_PERFORM_CHALLENGE_ORDER.every((id) =>
+              Boolean(australiaPerformEvidence?.[id]),
+            );
           const rawHasPerformCompletion =
             completedIds.includes(AUSTRALIA_PERFORM_ACTIVITY_ID) ||
             rawAttempt.australiaPerformCompleted === true ||
@@ -2388,6 +2395,14 @@ export function migrateAndValidateProgress(raw: unknown): LocalProgressV1 {
     indiaMaxXp + kenyaMaxXp + scotlandMaxXp + australiaMaxXp + egyptMaxXp;
   const rawXp = typeof rawRewards.xp === 'number' && rawRewards.xp >= 0 ? rawRewards.xp : 0;
 
+  const clampedCurrentRoute: ScreenRoute =
+    currentRoute === 'country-lobby' &&
+    ((selectedCountryId === 'scotland' && !kenyaPerformLegitCompleted) ||
+      (selectedCountryId === 'australia' && !australiaLegitUnlocked) ||
+      (selectedCountryId === 'egypt' && !egyptLegitUnlocked))
+      ? 'world-map'
+      : currentRoute;
+
   return {
     schemaVersion: 1,
     updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : defaults.updatedAt,
@@ -2396,7 +2411,7 @@ export function migrateAndValidateProgress(raw: unknown): LocalProgressV1 {
     audioPrefs,
     reducedMotionOverride,
     selectedCountryId,
-    currentRoute,
+    currentRoute: clampedCurrentRoute,
     avatar: {
       modelId,
       displayName,
@@ -5772,21 +5787,98 @@ export function getAustraliaPerformReflection(
   );
 }
 
-/**
- * Checks LIFETIME Australia PERFORM completion (persists across Replay Attempts).
- */
-export function isAustraliaPerformCompleted(progress: LocalProgressV1): boolean {
-  const entry = progress.missionProgress[AUSTRALIA_MISSION_ID];
+type AustraliaProgressLike = Pick<
+  MissionProgressEntry,
+  | 'status'
+  | 'completedActivityIds'
+  | 'australiaDiscoverStarted'
+  | 'australiaCompletedDiscoverIds'
+  | 'australiaBuildStarted'
+  | 'australiaCompletedBuildIds'
+  | 'australiaPracticeStarted'
+  | 'australiaCompletedPracticeIds'
+  | 'australiaPracticeEvidence'
+  | 'australiaPerformStarted'
+  | 'australiaCompletedPerformIds'
+  | 'australiaPerformEvidence'
+  | 'australiaPerformReflection'
+  | 'australiaPerformCompleted'
+>;
+
+function hasAllAustraliaPerformEvidence(entry: AustraliaProgressLike | undefined): boolean {
+  if (!entry || !entry.australiaPerformStarted) return false;
+  const seq = getSequentialAustraliaPerformPrefix(entry.australiaCompletedPerformIds);
+  if (seq.length < AUSTRALIA_PERFORM_CHALLENGE_ORDER.length) return false;
+  const evidenceMap = entry.australiaPerformEvidence;
+  if (!evidenceMap || typeof evidenceMap !== 'object' || Array.isArray(evidenceMap)) {
+    return false;
+  }
+  return AUSTRALIA_PERFORM_CHALLENGE_ORDER.every((id) => {
+    const spec = getAustraliaPerformChallengeSpec(id);
+    const validTurnIds = spec ? spec.turns.map((t) => t.turnId) : [];
+    return Boolean(sanitizeAustraliaPerformChallengeRecord(evidenceMap[id], validTurnIds));
+  });
+}
+
+function hasCanonicalAustraliaPerformEntry(entry: AustraliaProgressLike | undefined): boolean {
   if (!entry) return false;
+  if (!entry.australiaDiscoverStarted) return false;
+  if (
+    getSequentialAustraliaDiscoverPrefix(entry.australiaCompletedDiscoverIds).length <
+      AUSTRALIA_DISCOVER_MISSION_ORDER.length ||
+    !entry.completedActivityIds.includes(AUSTRALIA_DISCOVERY_ACTIVITY_ID)
+  ) {
+    return false;
+  }
+  if (!entry.australiaBuildStarted) return false;
+  if (
+    getSequentialAustraliaBuildPrefix(entry.australiaCompletedBuildIds).length <
+      AUSTRALIA_BUILD_MISSION_ORDER.length ||
+    !entry.completedActivityIds.includes(AUSTRALIA_BUILD_ACTIVITY_ID)
+  ) {
+    return false;
+  }
+  if (!entry.australiaPracticeStarted) return false;
+  const practiceIds = getSequentialAustraliaPracticePrefix(entry.australiaCompletedPracticeIds);
+  if (
+    practiceIds.length < AUSTRALIA_PRACTICE_MISSION_ORDER.length ||
+    !entry.completedActivityIds.includes(AUSTRALIA_PRACTICE_ACTIVITY_ID)
+  ) {
+    return false;
+  }
+  const practiceEvidence = entry.australiaPracticeEvidence;
+  if (
+    !practiceEvidence ||
+    typeof practiceEvidence !== 'object' ||
+    !AUSTRALIA_PRACTICE_MISSION_ORDER.every((id) => {
+      const spec = getAustraliaPracticeMissionSpec(id);
+      const validTurnIds = spec ? spec.turns.map((t) => t.turnId) : [];
+      return Boolean(sanitizeAustraliaSpeakingEvidenceRecord(practiceEvidence[id], validTurnIds));
+    })
+  ) {
+    return false;
+  }
+  if (!hasAllAustraliaPerformEvidence(entry)) return false;
+  if (!isValidAustraliaPerformReflectionState(entry.australiaPerformReflection)) return false;
   return (
-    entry.status === 'completed' ||
-    Boolean(entry.australiaPerformCompleted) ||
+    entry.status === 'completed' &&
+    entry.australiaPerformCompleted === true &&
     entry.completedActivityIds.includes(AUSTRALIA_PERFORM_ACTIVITY_ID)
   );
 }
 
 /**
- * Checks LIFETIME Australia mission completion (World 4 complete & Stamp eligible).
+ * Checks LIFETIME Australia PERFORM completion (persists across Replay Attempts).
+ * Requires all prerequisites (DISCOVER, BUILD, PRACTICE), all 5 PERFORM challenge records,
+ * valid submitted Self-Reflection, and canonical completion flags.
+ */
+export function isAustraliaPerformCompleted(progress: LocalProgressV1): boolean {
+  if (!isAustraliaUnlocked(progress)) return false;
+  return hasCanonicalAustraliaPerformEntry(progress.missionProgress[AUSTRALIA_MISSION_ID]);
+}
+
+/**
+ * Canonical predicate for LIFETIME Australia country completion (World 4 complete & Stamp eligible).
  */
 export function isAustraliaMissionCompleted(progress: LocalProgressV1): boolean {
   return isAustraliaPerformCompleted(progress);
@@ -5797,18 +5889,57 @@ export function isAustraliaMissionCompleted(progress: LocalProgressV1): boolean 
  */
 export function isAustraliaAttemptPerformCompleted(progress: LocalProgressV1): boolean {
   if (!isAustraliaPerformUnlocked(progress)) return false;
+  return hasCanonicalAustraliaPerformEntry(getAustraliaEffectiveEntry(progress));
+}
+
+/**
+ * Returns true when all Stage 4 PERFORM challenges are complete in the active attempt/run
+ * and only the mandatory Self-Reflection submission remains to complete Australia.
+ */
+export function isAustraliaPerformAwaitingReflection(progress: LocalProgressV1): boolean {
+  if (!isAustraliaPerformUnlocked(progress)) return false;
   const entry = getAustraliaEffectiveEntry(progress);
-  return (
-    entry.status === 'completed' ||
-    Boolean(entry.australiaPerformCompleted) ||
-    entry.completedActivityIds.includes(AUSTRALIA_PERFORM_ACTIVITY_ID)
-  );
+  return hasAllAustraliaPerformEvidence(entry) && !hasCanonicalAustraliaPerformEntry(entry);
+}
+
+/**
+ * Computes canonical Stage 4 PERFORM progress display (holds at 4/5 until Self-Reflection is
+ * explicitly submitted, then advances to 5/5).
+ */
+export function getAustraliaPerformDisplayProgress(progress: LocalProgressV1): {
+  completed: number;
+  total: number;
+  challengesCompleted: number;
+  totalChallenges: number;
+  reflectionCompleted: boolean;
+} {
+  const total = AUSTRALIA_PERFORM_CHALLENGE_ORDER.length;
+  const challengesCompleted = getAustraliaCompletedPerformIds(progress).length;
+  const reflectionCompleted = isAustraliaAttemptPerformCompleted(progress);
+  return {
+    completed: reflectionCompleted ? total : Math.min(challengesCompleted, total - 1),
+    total,
+    challengesCompleted,
+    totalChallenges: total,
+    reflectionCompleted,
+  };
+}
+
+/**
+ * Canonical navigation gate enforced across World Map, Continue/Enter World, Passport,
+ * and route handlers.
+ */
+export function canNavigateToCountry(progress: LocalProgressV1, countryId: CountryId): boolean {
+  if (countryId === 'india' || countryId === 'kenya') return true;
+  if (countryId === 'scotland') return isScotlandUnlocked(progress);
+  if (countryId === 'australia') return isAustraliaUnlocked(progress);
+  if (countryId === 'egypt') return isEgyptUnlocked(progress);
+  return false;
 }
 
 /**
  * Egypt unlocks strictly after Australia is legitimately completed
  * and the Sydney Passport Stamp is awarded.
- * Phase 5A allows free 3D/2D exploration with 0 XP / 0 stamps.
  */
 export function isEgyptUnlocked(progress: LocalProgressV1): boolean {
   return (
@@ -7683,7 +7814,7 @@ export function completeAustraliaPerformChallenge(
       ...progress.missionProgress,
       [AUSTRALIA_MISSION_ID]: {
         ...existing,
-        status: existing.status === 'completed' ? 'completed' : 'in_progress',
+        status: hasCanonicalAustraliaPerformEntry(existing) ? 'completed' : 'in_progress',
         currentStage: 'perform',
         australiaExploredPoiIds: nextExplored,
         australiaPerformStarted: true,
@@ -7699,7 +7830,7 @@ export function completeAustraliaPerformChallenge(
  * - Grants +100 XP ONCE on first lifetime completion (900 -> 1,000 XP).
  * - Awards `stamp_australia_sydney` ONCE (4th Passport Stamp).
  * - Marks `mission_australia_sydney` completed.
- * - Unlocks `'egypt'` eligibility (Coming Soon preview; no Egypt gameplay/XP/stamps).
+ * - Unlocks `'egypt'` eligibility (no duplicate XP/stamps on replay or re-submission).
  * - Supports Country Replay safely without duplicating lifetime XP/stamps.
  */
 export function completeAustraliaPerformMission(
@@ -7719,26 +7850,23 @@ export function completeAustraliaPerformMission(
   const activeReplay = getActiveReplayAttempt(progress, 'australia');
 
   if (activeReplay) {
-    if (!activeReplay.australiaPerformStarted) {
+    if (!hasAllAustraliaPerformEvidence(activeReplay)) {
       return progress;
     }
     const completedIds = getSequentialAustraliaPerformPrefix(
       activeReplay.australiaCompletedPerformIds,
     );
-    if (completedIds.length < AUSTRALIA_PERFORM_CHALLENGE_ORDER.length) {
-      return progress;
-    }
 
-    const attemptWasCompleted =
-      activeReplay.status === 'completed' &&
-      activeReplay.completedActivityIds.includes(AUSTRALIA_PERFORM_ACTIVITY_ID);
+    const attemptWasCompleted = hasCanonicalAustraliaPerformEntry(activeReplay);
 
     const lifetime = progress.missionProgress[AUSTRALIA_MISSION_ID] ?? {
       status: 'not_started' as const,
       currentStage: 'discover' as const,
       completedActivityIds: [],
     };
+    const lifetimeAlreadyCanonical = hasCanonicalAustraliaPerformEntry(lifetime);
     const lifetimeCanGrant =
+      !lifetimeAlreadyCanonical &&
       lifetime.completedActivityIds.includes(AUSTRALIA_PRACTICE_ACTIVITY_ID) &&
       !lifetime.completedActivityIds.includes(AUSTRALIA_PERFORM_ACTIVITY_ID);
     const lifetimeNeedsStamp = !progress.rewards.stamps.includes(AUSTRALIA_PASSPORT_STAMP_ID);
@@ -7823,21 +7951,18 @@ export function completeAustraliaPerformMission(
   }
 
   const existing = progress.missionProgress[AUSTRALIA_MISSION_ID];
-  if (!existing || !existing.australiaPerformStarted) {
+  if (!existing || !hasAllAustraliaPerformEvidence(existing)) {
     return progress;
   }
 
   const completedIds = getSequentialAustraliaPerformPrefix(existing.australiaCompletedPerformIds);
-  if (completedIds.length < AUSTRALIA_PERFORM_CHALLENGE_ORDER.length) {
-    return progress;
-  }
 
-  const alreadyCompletedActivity = existing.completedActivityIds.includes(
-    AUSTRALIA_PERFORM_ACTIVITY_ID,
-  );
+  const alreadyCompletedActivity =
+    existing.completedActivityIds.includes(AUSTRALIA_PERFORM_ACTIVITY_ID) &&
+    hasCanonicalAustraliaPerformEntry(existing);
   const alreadyHasStamp = progress.rewards.stamps.includes(AUSTRALIA_PASSPORT_STAMP_ID);
 
-  const nextCompletedIds = alreadyCompletedActivity
+  const nextCompletedIds = existing.completedActivityIds.includes(AUSTRALIA_PERFORM_ACTIVITY_ID)
     ? existing.completedActivityIds
     : [...existing.completedActivityIds, AUSTRALIA_PERFORM_ACTIVITY_ID];
 
